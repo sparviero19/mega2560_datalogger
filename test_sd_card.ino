@@ -1,0 +1,113 @@
+/*
+TODO: some descriptions of the work
+*/
+#include <Arduino.h>
+#include "error.h"
+#include "datalog.h"
+
+
+const int LED_PIN1 = LED_BUILTIN;
+const int LED_PIN2 = 9; // a red led should be connected to this pin to communicate error codes. 
+const int ERROR_PIN = LED_PIN2;
+const int BUTTON_PIN = 8;
+
+// const int RUN_BUTTON = ; // button to start and stop recording operations
+const int chipSelect = 53;             // SD card CS pin
+const int PIEZO_PINS[] = {A0, A1, A2, A3, A4};
+const int NUM_PIEZO = 5;
+float piezo_values[NUM_PIEZO];
+
+// State machine variables
+bool reset = false;
+bool record = false;
+bool pause = false;
+int button_pressed = 0;
+
+void setup() {
+
+  pinMode(BUTTON_PIN, INPUT);
+  pinMode(LED_PIN1, OUTPUT);
+  pinMode(LED_PIN2, OUTPUT);
+  digitalWrite(LED_PIN1,LOW);
+  digitalWrite(LED_PIN2, LOW);
+  
+  Serial.begin(57600);
+  float timeout = 5000;
+  float time = 0;
+  while (!Serial){
+    delay(500);
+    time+=500;
+    if (time>=timeout) error(SERIAL_ERROR, ERROR_PIN, reset);
+  }
+  Serial.println("P1 P2 P3 P4 P5");
+
+  // SD card initialization
+  int code = SD_init(chipSelect);
+  if (code != SD_OK) {
+    Serial.println("SD card initialization failed!");
+    error(SD_ERROR, ERROR_PIN, reset);
+  }
+  Serial.println("SD card initialized.");
+  SD.remove("data.csv");
+}
+
+inline void read_piezos(float* values) {
+  for(int i; i<NUM_PIEZO; ++i) {
+    values[i] = analogRead(PIEZO_PINS[i]);
+    
+  } 
+}
+
+
+void print_to_serial(float* piezoValues){
+
+  for (int i = 0; i < NUM_PIEZO; i++) {
+    Serial.print(piezoValues[i]);
+    Serial.print('\t');
+  }
+  Serial.println();
+}
+
+
+void loop() {
+
+  button_pressed = digitalRead(BUTTON_PIN);
+  while(digitalRead(BUTTON_PIN)==HIGH);
+  // Serial.print("button value: ");
+  // Serial.println(button_pressed);
+  if (button_pressed == HIGH) {
+    Serial.println("Program started!");
+    record = true;
+    button_pressed = LOW;
+  }
+
+  while(record) {
+
+    read_piezos(piezo_values);
+    print_to_serial(piezo_values);
+    int out = save_data(piezo_values, NUM_PIEZO, LED_PIN1);
+    switch(out){
+      case SUCCESS:
+        break;
+      case MAX_SAMPLE_COUNT_REACHED:
+        error(MAX_SAMPLE_ERR, LED_PIN1, reset);
+        break;
+      case WRITE_ERR:
+        error(DATA_WRITE_ERR, LED_PIN1, reset);
+        break;
+      default:
+        error(GENERIC_ERROR, LED_PIN1, reset);
+    }
+    delay(500);
+    button_pressed = digitalRead(BUTTON_PIN);
+    while(digitalRead(BUTTON_PIN)==HIGH);
+
+    if (button_pressed == HIGH) {
+      Serial.println("Program stopped.");
+      record = false;
+      button_pressed = LOW;
+    }
+  }
+  
+
+}
