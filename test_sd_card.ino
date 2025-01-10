@@ -51,13 +51,30 @@ void setup() {
   SD.remove("data.csv");
 }
 
-inline void read_piezos(float* values) {
-  for(int i; i<NUM_PIEZO; ++i) {
-    values[i] = analogRead(PIEZO_PINS[i]);
-    
-  } 
+inline void read_piezos(float* values, int rate) {
+  /*
+    Read and accumulate analog signals for a desired minimum rate in Hz. In reality, some margin is kept for 
+    the other computations in the loop. This is done until an interrupt based solution for the reading is implemented.
+  */
+  const int overhead = 10; //millisecs
+  int period = (1000-overhead)/rate;
+  clear_piezos(values);
+  for(int j=0; j<rate; ++j){
+    for(int i=0; i<NUM_PIEZO; ++i) {
+      values[i] += analogRead(PIEZO_PINS[i]);
+    }
+    delay(period);
+  }
+  for(int i=0; i<NUM_PIEZO; ++i)
+    values[i] /= rate;
 }
 
+void clear_piezos(float* values) {
+  /* 
+    set to 0 the sampled values
+  */
+  memset(values, 0, sizeof(values));
+}
 
 void print_to_serial(float* piezoValues){
 
@@ -83,7 +100,7 @@ void loop() {
 
   while(record) {
 
-    read_piezos(piezo_values);
+    read_piezos(piezo_values, 10);
     print_to_serial(piezo_values);
     int out = save_data(piezo_values, NUM_PIEZO, LED_PIN1);
     switch(out){
@@ -98,7 +115,7 @@ void loop() {
       default:
         error(GENERIC_ERROR, LED_PIN1, reset);
     }
-    delay(500);
+    //delay(500);
     button_pressed = digitalRead(BUTTON_PIN);
     while(digitalRead(BUTTON_PIN)==HIGH);
 
