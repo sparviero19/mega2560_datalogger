@@ -37,6 +37,37 @@ void printDirectory(File dir, int numTabs) {
   }
 }
 
+void StringList::ls(File dir){
+
+  while(true){
+    File entry = dir.openNextFile();
+    if (!entry){
+      break; //no more files
+    }
+    
+    if (entry.isDirectory()) continue;
+
+    this->push(entry.name());
+  }
+}
+
+// FIXME: refactor to avoid code duplication
+void DataFileList::ls(File dir) {
+  while(true){
+    File entry = dir.openNextFile();
+    if (!entry){
+      break; //no more files
+    }
+    
+    if (entry.isDirectory()) continue;
+
+    if (strcmp("DATA", entry.name())==0) {
+      this->push(entry.name());
+    }
+      
+  }
+}
+
 int SD_init(const int chipSelect) {
   if (!card.init(SPI_HALF_SPEED, chipSelect)) return SD_ERR_INIT;
 
@@ -133,3 +164,6 @@ int save_data(const float* piezoValues, const int num_values, const int led_pin)
     return WRITE_ERR;
   }
 }
+
+
+//void ls(const File &dir){}
