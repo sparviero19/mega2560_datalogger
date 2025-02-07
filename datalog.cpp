@@ -37,6 +37,9 @@ void printDirectory(File dir, int numTabs) {
   }
 }
 
+
+//////// StringList methods ///////////////////
+
 void StringList::ls(File dir){
 
   while(true){
@@ -51,8 +54,16 @@ void StringList::ls(File dir){
   }
 }
 
+//////// DataFileList methods ///////////////////
+
 // FIXME: refactor to avoid code duplication
 void DataFileList::ls(File dir) {
+
+  char index_list[DataFileList::_capacity][DataFileList::_index_length+1] = {0}; // init is useless
+  char (*empty_slot)[DataFileList::_index_length+1] = index_list;
+  size_t numeric_indexes[DataFileList::_capacity];
+  int count = 0;
+
   while(true){
     File entry = dir.openNextFile();
     if (!entry){
@@ -62,11 +73,17 @@ void DataFileList::ls(File dir) {
     if (entry.isDirectory()) continue;
 
     if (strcmp("DATA", entry.name())==0) {
+      // extract string
       this->push(entry.name());
-    }
-      
+      // extract id and convert to int
+      numeric_indexes[count++] = atoi(entry.name()+5); // the substing starting at position 5 should be the index 
+    }    
   }
+  // let's sort the indexes first
+  //qsort()
 }
+
+//////// SD related code ///////////////////
 
 int SD_init(const int chipSelect) {
   if (!card.init(SPI_HALF_SPEED, chipSelect)) return SD_ERR_INIT;

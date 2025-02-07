@@ -48,14 +48,23 @@ void setup() {
     error(SD_ERROR, ERROR_PIN, reset);
   }
   Serial.println("SD card initialized.");
-  SD.remove("data.csv");
+  //SD.remove("data.csv");
+
+  //SETUP Timer for reading sensors
+  TCCR2A|=(1<<WGM01); // Timer compare mode
+
 }
+
+ISR(TIMER0_COMPA_vect){    //This is the interrupt request 
+}
+
 
 inline void read_piezos(float* values, int rate) {
   /*
     Read and accumulate analog signals for a desired minimum rate in Hz. In reality, some margin is kept for 
     the other computations in the loop. This is done until an interrupt based solution for the reading is implemented.
   */
+  // TODO: all this code will have to be handled trough timer interrupts
   const int overhead = 10; //millisecs
   int period = (1000-overhead)/rate;
   clear_piezos(values);
