@@ -4,7 +4,9 @@ TODO: some descriptions of the work
 #include <Arduino.h>
 #include "error.h"
 #include "datalog.h"
+#include "test.hpp"
 
+#define TEST
 
 const int LED_PIN1 = LED_BUILTIN;
 const int LED_PIN2 = 9; // a red led should be connected to this pin to communicate error codes. 
@@ -51,7 +53,7 @@ void setup() {
   //SD.remove("data.csv");
 
   //SETUP Timer for reading sensors
-  TCCR2A|=(1<<WGM01); // Timer compare mode
+  //TCCR2A|=(1<<WGM01); // Timer compare mode
 
 }
 
@@ -95,6 +97,22 @@ void print_to_serial(float* piezoValues){
 }
 
 
+#if defined(TEST)
+bool done = false;
+void loop() {
+  if (! done) {
+    TestDataFile test_df;
+    test_df.test_construction();
+    done = true;
+  }
+  else{
+    Serial.println("program terminated");
+  }
+  while(true);
+}
+
+#else
+
 void loop() {
 
   button_pressed = digitalRead(BUTTON_PIN);
@@ -135,5 +153,6 @@ void loop() {
     }
   }
   
-
 }
+#endif
+

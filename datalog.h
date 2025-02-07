@@ -21,6 +21,65 @@ template <typename T> struct indexed_element {
   int index;
 };
 
+char constexpr MAX_PATH_LENGTH = 20;
+
+class DataFile
+/*
+  This class represent the inderface for a data file with name
+  "data%04d.csv", where the numeric part is the index of the file
+  with prepended zero padding. 
+  This interface allow for opening and closing the file, and for 
+  the insertion of formatted data. However, the factory class for this
+  one is the DataFileManager, that overviewes all the data file that are
+  saved on the SD card. 
+*/
+{
+  friend class DataFileManager;
+
+  int _index;
+  char full_path[MAX_PATH_LENGTH];
+  File _file;
+
+  public:
+  DataFile(const int index, const char* path = "", bool append = false) : _index(index) {
+    
+    // Serial.println("Dentro il costrutture");
+
+    char filename[13];
+    sprintf(&filename[0], "DATA%04d.csv", _index);
+    // Serial.println(filename);
+    if (strlen(path)){
+      snprintf(full_path, MAX_PATH_LENGTH, "%s/%s", path, filename);
+    }
+    else {
+      snprintf(full_path, MAX_PATH_LENGTH, "%s", filename);
+    }
+    // Serial.println(full_path);
+    // Serial.println("Breakpoint A ");
+    // check if the file exists
+    if (! append) {
+      // Serial.println("Breakpoint D ");
+      if (SD.exists(filename)) {
+        SD.remove(filename);
+      }
+    }
+    // Serial.println("Breakpoint B");
+    _file = SD.open(full_path, FILE_WRITE);
+
+    // Serial.println("Breakpoint C");
+  }
+
+  ~DataFile(){
+    _file.close();
+  }
+};
+
+class DataFileManager {};
+
+
+
+
+
 struct StringList {
   /*
   Static string list of size 100. I hack my file list in this way to avoid

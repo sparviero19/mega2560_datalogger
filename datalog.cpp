@@ -55,7 +55,6 @@ void StringList::ls(File dir){
 }
 
 //////// DataFileList methods ///////////////////
-
 // FIXME: refactor to avoid code duplication
 void DataFileList::ls(File dir) {
 
@@ -82,7 +81,6 @@ void DataFileList::ls(File dir) {
   // let's sort the indexes first
   //qsort()
 }
-
 //////// SD related code ///////////////////
 
 int SD_init(const int chipSelect) {
