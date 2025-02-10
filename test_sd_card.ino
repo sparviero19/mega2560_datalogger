@@ -6,7 +6,7 @@ TODO: some descriptions of the work
 #include "datalog.h"
 #include "test.hpp"
 
-#define TEST
+//#define TEST
 
 const int LED_PIN1 = LED_BUILTIN;
 const int LED_PIN2 = 9; // a red led should be connected to this pin to communicate error codes. 
@@ -50,7 +50,7 @@ void setup() {
     error(SD_ERROR, ERROR_PIN, reset);
   }
   Serial.println("SD card initialized.");
-  //SD.remove("data.csv");
+  SD.remove("data.csv");
 
   //SETUP Timer for reading sensors
   //TCCR2A|=(1<<WGM01); // Timer compare mode
