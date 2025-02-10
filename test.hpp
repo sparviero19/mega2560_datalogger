@@ -49,20 +49,86 @@ struct TestDataFile {
 };
 
 
-// struct TestDataFileList {
+struct TestDataFileManager {
 
-//   DataFileList* dfl;
+  DataFileManager* dfm = nullptr;
+  const int chipSelect = 53;
+  const int error_pin = 9;
 
-//   TestDataFileList(){
-//     this->dfl = new(DataFileList);  
-//   };
+  TestDataFileManager(){
 
-//   ~TestDataFileList(){
-//     delete this->dfl;
-//   }
+    // init test
+    SD.open("DATA0001.cvv");
+    SD.open("DATA0002.csv");
+    SD.open("DATA0005.csv");
+    SD.open("DATA0007.csv");
+    SD.open("DATA0014.csv");
+    SD.open("DATA0099.csv");
+    SD.mkdir("tmp1");
+    SD.open("tmp1/DATA0001.cvv");
+    SD.open("tmp1/DATA0002.csv");
+    SD.open("tmp1/DATA0005.csv");
+    SD.open("tmp1/DATA0007.csv");
+    SD.open("tmp1/DATA0014.csv");
+    SD.mkdir("tmp2");
+    SD.open("tmp2/DATA0001.cvv");
+    SD.open("tmp2/DATA0002.csv");
+    SD.open("tmp2/DATA0005.csv");
+    SD.open("tmp2/DATA0007.csv");
+    SD.open("tmp2/DATA0100.csv");
 
-//   void test_ls();
-// };
+    // test opening in root
+    this->dfm = new DataFileManager("/", chipSelect, error_pin);
+    if (dfm->_index == 99){
+      Serial.println("test 1 passed");
+    }
+    if(this->dfm){
+      delete this->dfm;
+      this->dfm = nullptr;
+    }
+
+    // test opening in subdirectory
+    this->dfm = new DataFileManager("tmp1", chipSelect, error_pin);
+    if (dfm->_index == 14){
+      Serial.println("test 2 passed");
+    }
+    if (this->dfm){
+      delete this->dfm;
+      this->dfm = nullptr;
+    }
+
+    // test index out of bounds
+    this->dfm = new DataFileManager("tmp2", chipSelect, error_pin);
+    
+  };
+
+  ~TestDataFileManager(){
+    if (dfm){
+      delete this->dfm;
+    }
+    // delete all test files
+    SD.remove("DATA0001.cvv");
+    SD.remove("DATA0002.csv");
+    SD.remove("DATA0005.csv");
+    SD.remove("DATA0007.csv");
+    SD.remove("DATA0014.csv");
+    SD.remove("DATA0099.csv");
+    SD.rmdir("tmp1");
+    SD.remove("tmp1/DATA0001.cvv");
+    SD.remove("tmp1/DATA0002.csv");
+    SD.remove("tmp1/DATA0005.csv");
+    SD.remove("tmp1/DATA0007.csv");
+    SD.remove("tmp1/DATA0014.csv");
+    SD.rmdir("tmp2");
+    SD.remove("tmp2/DATA0001.cvv");
+    SD.remove("tmp2/DATA0002.csv");
+    SD.remove("tmp2/DATA0005.csv");
+    SD.remove("tmp2/DATA0007.csv");
+    SD.remove("tmp2/DATA0100.csv");
+  }
+
+  void test_ls();
+};
 
 // void test_ls(){
   
