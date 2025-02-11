@@ -27,6 +27,7 @@ int button_pressed = 0;
 
 void setup() {
 
+  delay(1000);
   pinMode(BUTTON_PIN, INPUT);
   pinMode(LED_PIN1, OUTPUT);
   pinMode(LED_PIN2, OUTPUT);
@@ -42,8 +43,32 @@ void setup() {
     if (time>=timeout) error(SERIAL_ERROR, ERROR_PIN, reset);
   }
   Serial.println("P1 P2 P3 P4 P5");
-
+  
   // SD card initialization
+  Serial.println("****************************");
+  Serial.println("   Initializing SD card     ");
+  Serial.println("----------------------------");
+  Serial.print("\n");
+  if(!SD.begin()){
+    Serial.println("SD card initialization unsuccessful");
+  };
+
+  // check for eough free space
+  Serial.println("----------------------------");
+  Serial.println("SD card content:");
+  File my_root;
+  my_root = SD.open("/");
+  printDirectory(my_root, 0, 0, 3);
+  Serial.println();
+  Serial.println("----------------------------");
+  Serial.println("  Initialization completed  ");
+  Serial.println("****************************");
+
+
+#if defined(TEST)
+
+#else
+  
   DataFileManager dfm("/", chipSelect, ERROR_PIN);
   
   Serial.println("SD card initialized.");
@@ -51,7 +76,7 @@ void setup() {
 
   //SETUP Timer for reading sensors
   //TCCR2A|=(1<<WGM01); // Timer compare mode
-
+#endif
 }
 
 ISR(TIMER0_COMPA_vect){    //This is the interrupt request 
@@ -98,8 +123,10 @@ void print_to_serial(float* piezoValues){
 bool done = false;
 void loop() {
   if (! done) {
-    TestDataFile test_df;
-    test_df.test_construction();
+    // TestDataFile test_df;
+    // test_df.test_construction();
+    TestDataFileManager test_dfm;
+    test_dfm.test_construction();
     done = true;
   }
   else{

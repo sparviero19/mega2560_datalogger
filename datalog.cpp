@@ -17,7 +17,9 @@ String format_data(const float* piezoValues, const int len){
 }
 
 
-void printDirectory(File dir, int numTabs) {
+void printDirectory(File dir, int numTabs, int depth, int max_depth) {
+
+  if (depth > max_depth) return;
 
   while (true) {
     File entry =  dir.openNextFile();
@@ -27,17 +29,17 @@ void printDirectory(File dir, int numTabs) {
     }
 
     for (uint8_t i = 0; i < numTabs; i++) {
-      Serial.print('\t');
+      Serial.print("....");
     }
 
     Serial.print(entry.name());
 
     if (entry.isDirectory()) {
       Serial.println("/");
-      printDirectory(entry, numTabs + 1);
+      printDirectory(entry, numTabs + 1, depth +1, max_depth);
     } else {
       // files have sizes, directories do not
-      Serial.print("\t\t");
+      Serial.print("....");
       Serial.println(entry.size(), DEC);
     }
     entry.close();
@@ -88,11 +90,12 @@ void DataFileManager::_find_next_index(const File &dir) {
 }
 //////// DataFileManager related code ///////////////////
 
-int DataFileManager::_SD_init(const int chipSelect) {
+int SD_info(const int chipSelect) {
 
-  Serial.println("----------------------------");
-  Serial.println("Initializing DataFileManager");
-  Serial.println("----------------------------");
+  Sd2Card _card;
+  SdVolume _volume;
+  SdFile _sd_root;
+  Serial.println("--- Some info on the SD card ---");
   Serial.print("\n\n");
 
   if (!_card.init(SPI_HALF_SPEED, chipSelect)) return SD_ERR_INIT;
@@ -149,12 +152,6 @@ int DataFileManager::_SD_init(const int chipSelect) {
   _sd_root.ls(LS_R | LS_DATE | LS_SIZE);
   _sd_root.close();
   if (!SD.begin(chipSelect)) return SD_ERR_INIT;
-
-  // // check for eough free space
-  // File my_root;
-  // my_root = SD.open("/");
-  // printDirectory(my_root, 0);
-  // Serial.println("done!");
 
   return SD_OK;
 }

@@ -24,6 +24,29 @@ template <typename T> struct indexed_element {
 
 char constexpr MAX_PATH_LENGTH = 20;
 
+void printDirectory(File dir, int numTabs, int depth = 0, int max_depth = 0);
+
+// struct SDCard {
+
+//   Sd2Card _card;
+//   SdVolume _volume;
+//   SdFile _sd_root;
+
+//   public:
+//     static SDCard& getInstance(const int chipSelect)
+//     {
+//         static SDCard instance; // Guaranteed to be destroyed.
+//         SDCard::_SD_init(chipSelect);
+//         return instance;
+//     }
+//     SDCard(SDCard const&)          = delete;
+//     void operator=(SDCard const&)  = delete;
+    
+//     private:
+//         SDCard() {}                    // Constructor? (the {} brackets) are needed here.
+//         int _SD_init(const int chipSelect);
+
+// };
 
 class DataFile
 /*
@@ -79,21 +102,20 @@ class DataFile
 class DataFileManager {
 
   friend class TestDataFileManager;
-  Sd2Card _card;
-  SdVolume _volume;
-  SdFile _sd_root;
+  
   File *_root = nullptr;
   static const int _capacity = 100;
 
   int _index = -1;
 
-  int _SD_init(const int chipSelect);
   void _find_next_index(const File &dir);
   static int _compare_ints(const void *arg1, const void *arg2){
     return *(int *)arg1 - *(int *)arg2;
   }
 
   public:
+  
+
   DataFileManager(const char* dirname, const int chipSelect, const int error_pin){
 
     char name[13] = "/";
@@ -101,13 +123,13 @@ class DataFileManager {
       strcpy(name, dirname);
     }
     
-    int code = _SD_init(chipSelect);
-    if (code != SD_OK) {
-      Serial.println("SD card initialization failed!");
-      error(SD_ERROR, error_pin, false); // on error and blink forever and stop main program
-    }
-    _root = new File(_sd_root, name);
-    _find_next_index(*_root);
+    // int code = SD_init(chipSelect);
+    // if (code != SD_OK) {
+    //   Serial.println("SD card initialization failed!");
+    //   error(SD_ERROR, error_pin, false); // on error and blink forever and stop main program
+    // }
+    // _root = new File(_sd_root, name);
+    // _find_next_index(*_root);
   };
 
   ~DataFileManager(){
