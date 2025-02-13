@@ -1,8 +1,12 @@
+
 #ifndef DATALOG_H
 #define DATALOG_H
 #include <SPI.h>
 #include <SD.h>
 #include "error.h"
+
+const int LED_PIN2 = 9; // a red led should be connected to this pin to communicate error codes. 
+
 
 constexpr int SAMPLE_LIMIT = 6000;          // Number of samples before blinking LED
 constexpr int SD_OK = 0;
@@ -97,13 +101,15 @@ class DataFile
   ~DataFile(){
     _file.close();
   }
+
+  int save_data(const float* piezoValues, const int num_values, const int led_pin); // TODO: make it generic with a String formatter
 };
 
 class DataFileManager {
 
   friend class TestDataFileManager;
   
-  File *_root = nullptr;
+  File _root;
   static const int _capacity = 100;
 
   int _index = -1;
@@ -116,28 +122,32 @@ class DataFileManager {
   public:
   
 
-  DataFileManager(const char* dirname, const int chipSelect, const int error_pin){
+  DataFileManager(const char* dirname){
 
     char name[13] = "/";
     if (strlen(dirname) != 0){
       strcpy(name, dirname);
     }
     
-    // int code = SD_init(chipSelect);
-    // if (code != SD_OK) {
-    //   Serial.println("SD card initialization failed!");
-    //   error(SD_ERROR, error_pin, false); // on error and blink forever and stop main program
-    // }
-    // _root = new File(_sd_root, name);
-    // _find_next_index(*_root);
+    if (!SD.exists(dirname)) SD.mkdir(dirname);
+
+    _root = SD.open(dirname);
+    if (!_root.isDirectory()) {
+      Serial.println("Something went wrong with this dirname");
+      error(GENERIC_ERROR, LED_PIN2, false);
+    }
+    
+    _find_next_index(_root);
   };
 
   ~DataFileManager(){
-    delete _root;
+    if (_root){
+      _root.close();
+    }
   };
 
-  
-  int save_data(const float* piezoValues, const int num_values, const int led_pin); // TODO: make it generic with a String formatter
+  DataFile open();
+    
 };
 
 

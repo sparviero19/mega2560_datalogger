@@ -85,7 +85,7 @@ struct TestDataFileManager {
     Serial.println("In TestDataFileManager.test_constructor: ");
     // test opening in root
     Serial.println("Test 1:");
-    this->dfm = new DataFileManager("/", chipSelect, error_pin);
+    this->dfm = new DataFileManager("/");
     if (dfm->_index == 99){
       Serial.println("test 1 passed");
     }
@@ -96,7 +96,7 @@ struct TestDataFileManager {
 
     Serial.println("Test 2:");
     // test opening in subdirectory
-    this->dfm = new DataFileManager("tmp1", chipSelect, error_pin);
+    this->dfm = new DataFileManager("tmp1");
     if (dfm->_index == 14){
       Serial.println("test 2 passed");
     }

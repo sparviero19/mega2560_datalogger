@@ -8,8 +8,9 @@ TODO: some descriptions of the work
 
 #define TEST
 
+// FIXME cambiare 'sta porcheria
 const int LED_PIN1 = LED_BUILTIN;
-const int LED_PIN2 = 9; // a red led should be connected to this pin to communicate error codes. 
+// const int LED_PIN2 = 9; // a red led should be connected to this pin to communicate error codes. 
 const int ERROR_PIN = LED_PIN2;
 const int BUTTON_PIN = 8;
 

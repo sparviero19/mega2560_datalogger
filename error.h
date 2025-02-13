@@ -8,7 +8,6 @@ const int SERIAL_ERROR = 1;
 const int DATA_WRITE_ERR = 2;
 const int MAX_SAMPLE_ERR = 3;
 
-
 void error(int code, int led_pin, const bool& control_var);
 void three_blinks(int led_pin);
 void blink_led_with_pattern(String& pattern, int led);

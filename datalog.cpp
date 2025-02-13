@@ -1,7 +1,6 @@
 #include <Arduino.h>
 #include <time.h>
 #include "datalog.h"
-#include "error.h"
 
 int sample_counter = 0;
 File output_file;
@@ -66,27 +65,39 @@ void printDirectory(File dir, int numTabs, int depth, int max_depth) {
 //////// DataFileList methods ///////////////////
 void DataFileManager::_find_next_index(const File &dir) {
 
+  //Serial.println("-----> Breakpoint 1");
   int numeric_indexes[_capacity];
   int count = 0;
 
   while(true){
+    //Serial.println("-----> Breakpoint 2");
     File entry = dir.openNextFile();
     if (!entry){
       break; //no more files
     }
-    
+    //Serial.println("-----> Breakpoint 3");
     if (entry.isDirectory()) continue;
-
-    if (strcmp("DATA", entry.name())==0) {
+    
+    if (strstr(entry.name(), "DATA")!=NULL) {
+      //Serial.print("-----> Breakpoint 4  index here is ");
       // extract id and convert to int
+      //Serial.println(atoi(entry.name()+5));
       numeric_indexes[count++] = atoi(entry.name()+5); // the substing starting at position 5 should be the index 
-      count++;
     }    
   }
   // let's sort the indexes first
+  //Serial.print("-----> Breakpoint 5 count = ");
+  //Serial.println(count);
   qsort(numeric_indexes, count, sizeof(int), _compare_ints);
-
-  _index = numeric_indexes[count];
+  //Serial.println("-----> Breakpoint 6");
+  _index = numeric_indexes[count-1];
+  Serial.print("Index is :");
+  Serial.println(_index);
+  // for(int i=0; i<count; i++){
+  //   Serial.print(numeric_indexes[i]);
+  //   Serial.print(' ');
+  // }
+  // Serial.println();
 }
 //////// DataFileManager related code ///////////////////
 
@@ -160,7 +171,7 @@ int SD_info(const int chipSelect) {
 
 
 
-int DataFileManager::save_data(const float* piezoValues, const int num_values, const int led_pin) {
+int DataFile::save_data(const float* piezoValues, const int num_values, const int led_pin) {
   // Open the file in append mode
   output_file = SD.open("data.csv", FILE_WRITE);
   if (output_file) {
