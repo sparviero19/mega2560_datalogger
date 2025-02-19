@@ -103,6 +103,9 @@ class DataFile
   }
 
   int save_data(const float* piezoValues, const int num_values, const int led_pin); // TODO: make it generic with a String formatter
+  int save_data(const char* formatted_str, const int led_pin);
+
+  
 };
 
 class DataFileManager {
@@ -123,6 +126,7 @@ class DataFileManager {
   
 
   DataFileManager(const char* dirname){
+    Serial.println("Initializing DataFileManager");
 
     char name[13] = "/";
     if (strlen(dirname) != 0){
@@ -138,6 +142,8 @@ class DataFileManager {
     }
     
     _find_next_index(_root);
+    Serial.print("Current file index is ");
+    Serial.println(_index);
   };
 
   ~DataFileManager(){
@@ -146,8 +152,13 @@ class DataFileManager {
     }
   };
 
-  DataFile open();
-    
+  DataFile* open(int index=-1, bool append=false);
+  const char* format_piezo_data(const float* piezoValues, const int len);
+  String format_data(const float* piezoValues, const int len);
+  
+  private:
+
+  
 };
 
 

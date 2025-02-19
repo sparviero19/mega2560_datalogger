@@ -6,7 +6,7 @@ TODO: some descriptions of the work
 #include "datalog.h"
 #include "test.hpp"
 
-#define TEST
+//#define TEST
 
 // FIXME cambiare 'sta porcheria
 const int LED_PIN1 = LED_BUILTIN;
@@ -25,6 +25,17 @@ bool reset = false;
 bool record = false;
 bool pause = false;
 int button_pressed = 0;
+
+#if defined(TEST)
+
+#else
+  
+  DataFileManager dfm("/");
+
+  //SETUP Timer for reading sensors
+  //TCCR2A|=(1<<WGM01); // Timer compare mode
+#endif
+
 
 void setup() {
 
@@ -66,18 +77,7 @@ void setup() {
   Serial.println("****************************");
 
 
-#if defined(TEST)
 
-#else
-  
-  DataFileManager dfm("/", chipSelect, ERROR_PIN);
-  
-  Serial.println("SD card initialized.");
-  //SD.remove("data.csv");
-
-  //SETUP Timer for reading sensors
-  //TCCR2A|=(1<<WGM01); // Timer compare mode
-#endif
 }
 
 ISR(TIMER0_COMPA_vect){    //This is the interrupt request 
@@ -140,6 +140,7 @@ void loop() {
 
 void loop() {
 
+  DataFile *cur_file;
   button_pressed = digitalRead(BUTTON_PIN);
   while(digitalRead(BUTTON_PIN)==HIGH);
   // Serial.print("button value: ");
@@ -148,13 +149,15 @@ void loop() {
     Serial.println("Program started!");
     record = true;
     button_pressed = LOW;
+    cur_file = dfm.open();
   }
 
   while(record) {
 
     read_piezos(piezo_values, 10);
     print_to_serial(piezo_values);
-    int out = save_data(piezo_values, NUM_PIEZO, LED_PIN1);
+    int out = cur_file->save_data(dfm.format_piezo_data(piezo_values, NUM_PIEZO), LED_PIN1);
+    //int out = cur_file->save_data(piezo_values, NUM_PIEZO, LED_PIN1);
     switch(out){
       case SUCCESS:
         break;
@@ -175,6 +178,10 @@ void loop() {
       Serial.println("Program stopped.");
       record = false;
       button_pressed = LOW;
+      if (cur_file){
+        delete cur_file;
+        cur_file = nullptr;
+      }
     }
   }
   

@@ -5,7 +5,7 @@
 int sample_counter = 0;
 File output_file;
 
-String format_data(const float* piezoValues, const int len){
+String DataFileManager::format_data(const float* piezoValues, const int len){
   // Format the data into a CSV-style string
   String data = String(millis()) + ',';
   for (int i = 0; i < len; i++) {
@@ -15,6 +15,12 @@ String format_data(const float* piezoValues, const int len){
   return data;
 }
 
+const char* DataFileManager::format_piezo_data(const float* piezoValues, const int len){
+  String formatted_data = format_data(piezoValues, len);
+  char* out = new char[len+1];
+  strcpy(out, formatted_data.c_str());
+  return out; 
+}
 
 void printDirectory(File dir, int numTabs, int depth, int max_depth) {
 
@@ -62,7 +68,8 @@ void printDirectory(File dir, int numTabs, int depth, int max_depth) {
 //   }
 // }
 
-//////// DataFileList methods ///////////////////
+//////// DataFileManager related code ///////////////////
+
 void DataFileManager::_find_next_index(const File &dir) {
 
   //Serial.println("-----> Breakpoint 1");
@@ -91,16 +98,39 @@ void DataFileManager::_find_next_index(const File &dir) {
   qsort(numeric_indexes, count, sizeof(int), _compare_ints);
   //Serial.println("-----> Breakpoint 6");
   _index = numeric_indexes[count-1];
-  Serial.print("Index is :");
-  Serial.println(_index);
+  // Serial.print("Index is: ");
+  // Serial.println(_index);
   // for(int i=0; i<count; i++){
   //   Serial.print(numeric_indexes[i]);
   //   Serial.print(' ');
   // }
   // Serial.println();
 }
-//////// DataFileManager related code ///////////////////
 
+DataFile* DataFileManager::open(int index, bool append){
+  DataFile* new_df = nullptr;
+  if(index>0) {
+    // open a specific file using DataFile interface
+    new_df = new DataFile(index, _root.name(), append);
+  }
+  else {
+    // open a new file with the next index
+    if(_index < 9999) {
+      new_df = new DataFile(++_index, _root.name(), false);
+    }
+    else {
+      Serial.println("Maximum index limit reached!");
+      Serial.print("current index is "); 
+      Serial.println(_index);
+    }
+  }
+
+  return new_df;
+  
+}
+
+
+////////////////////////////////////////////////////////////////77
 int SD_info(const int chipSelect) {
 
   Sd2Card _card;
@@ -171,6 +201,7 @@ int SD_info(const int chipSelect) {
 
 
 
+
 int DataFile::save_data(const float* piezoValues, const int num_values, const int led_pin) {
   // Open the file in append mode
   output_file = SD.open("data.csv", FILE_WRITE);
@@ -191,6 +222,21 @@ int DataFile::save_data(const float* piezoValues, const int num_values, const in
     Serial.println("Error opening file for writing!");
     return WRITE_ERR;
   }
+}
+
+int DataFile::save_data(const char* formatted_str, const int led_pin){
+  if (_file) {
+    _file.println(formatted_str);
+    _file.flush();
+    Serial.print("Data saved: " );
+    Serial.println(formatted_str);
+    return SUCCESS;
+  }
+  else{
+    Serial.println("Error opening file for writing!");
+    return WRITE_ERR;
+  }
+
 }
 
 
