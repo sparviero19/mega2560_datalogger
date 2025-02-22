@@ -55,12 +55,12 @@ const char* DataFileManager::format_data(const float* piezoValues, const int len
     }
     cursor += written;
     remaining -= written;
-    Serial.print(piezoValues[i]);
-    Serial.print('\t');
+    // Serial.print(piezoValues[i]);
+    // Serial.print('\t');
   }
-  Serial.println();
-  Serial.print(F("_buffer: "));
-  Serial.println(_buffer);
+  // Serial.println();
+  // Serial.print(F("_buffer: "));
+  // Serial.println(_buffer);
   return _buffer;
 }
 
@@ -139,11 +139,19 @@ DataFile* DataFileManager::open(int index, bool append){
   if(index>0) {
     // open a specific file using DataFile interface
     new_df = new DataFile(index, _root.name(), append);
+    if(new_df){
+      Serial.print(F("Opened new DatraFile for writing. Index is "));
+      Serial.println(index);
+    }
   }
   else {
     // open a new file with the next index
     if(_index < 9999) {
       new_df = new DataFile(++_index, _root.name(), false);
+      if(new_df){
+      Serial.print(F("Opened new DatraFile for writing. Index is "));
+      Serial.println(_index);
+    }
     }
     else {
       Serial.println("Maximum index limit reached!");
@@ -249,7 +257,7 @@ int SD_info(const int chipSelect) {
 // }
 
 int DataFile::save_data(const char* formatted_str, const int led_pin){
-  Serial.println(F("B3"));
+  // Serial.println(F("B3"));
   if (_file) {
     _file.println(formatted_str);
     _file.flush();
