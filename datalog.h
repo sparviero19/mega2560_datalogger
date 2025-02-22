@@ -17,7 +17,7 @@ constexpr int FILENAME_LENGTH = 12; // 8.3 name standard I guess
 constexpr int SUCCESS = 0;
 constexpr int WRITE_ERR =1;
 constexpr int MAX_SAMPLE_COUNT_REACHED = 2;
-extern int sample_counter;                // Counter to track written samples
+//extern int sample_counter;                // Counter to track written samples
 extern File output_file;
 
 template <typename T> struct indexed_element {
@@ -68,6 +68,8 @@ class DataFile
   int _index;
   char full_path[MAX_PATH_LENGTH];
   File _file;
+  int _sample_counter = 0;
+
 
   public:
   DataFile(const int index, const char* path = "", bool append = false) : _index(index) {
@@ -102,7 +104,7 @@ class DataFile
     _file.close();
   }
 
-  int save_data(const float* piezoValues, const int num_values, const int led_pin); // TODO: make it generic with a String formatter
+  //int save_data(const float* piezoValues, const int num_values, const int led_pin); // TODO: make it generic with a String formatter
   int save_data(const char* formatted_str, const int led_pin);
 
   
@@ -114,7 +116,7 @@ class DataFileManager {
   
   File _root;
   static const int _capacity = 100;
-
+  char _buffer[100];
   int _index = -1;
 
   void _find_next_index(const File &dir);
@@ -153,8 +155,8 @@ class DataFileManager {
   };
 
   DataFile* open(int index=-1, bool append=false);
-  const char* format_piezo_data(const float* piezoValues, const int len);
-  String format_data(const float* piezoValues, const int len);
+  //const char* format_piezo_data(const float* piezoValues, const int len);
+  const char* format_data(const float* piezoValues, const int len);
   
   private:
 

@@ -75,7 +75,8 @@ struct TestDataFileManager {
     SD.open("/tmp2/DATA0002.csv", FILE_WRITE);
     SD.open("/tmp2/DATA0005.csv", FILE_WRITE);
     SD.open("/tmp2/DATA0007.csv", FILE_WRITE);
-    SD.open("/tmp2/DATA0100.csv", FILE_WRITE);
+    SD.open("/tmp2/DATA3100.csv", FILE_WRITE);
+    if(!SD.mkdir("tmp3")) Serial.println("----------------> E che cacchio!"); // empty folder to see if its will start from 0
     printDirectory(SD.open("/"), 0, 0, 2);
     Serial.println("done.");
     
@@ -89,6 +90,9 @@ struct TestDataFileManager {
     if (dfm->_index == 99){
       Serial.println("test 1 passed");
     }
+    else {
+      Serial.println("test 1 FAILED!");
+    }
     if(this->dfm){
       delete this->dfm;
       this->dfm = nullptr;
@@ -100,15 +104,41 @@ struct TestDataFileManager {
     if (dfm->_index == 14){
       Serial.println("test 2 passed");
     }
+    else {
+      Serial.println("test 2 FAILED!");
+    }
     if (this->dfm){
       delete this->dfm;
       this->dfm = nullptr;
     }
 
-    // Serial.println("Test 3:");
-    // // test index out of bounds
-    // this->dfm = new DataFileManager("tmp2", chipSelect, error_pin);
-    
+    Serial.println("Test 3:");
+    // test index when folder is empty
+    this->dfm = new DataFileManager("tmp3");
+    if(dfm->_index == -1){
+      Serial.println("test 3 passed. ");
+    }
+    else {
+      Serial.println("test 3 FAILED!");
+    }
+    if (this->dfm){
+      delete this->dfm;
+      this->dfm = nullptr;
+    }
+
+    Serial.println("Test 4:");
+    // test index when folder is empty
+    this->dfm = new DataFileManager("tmp2");
+    if(dfm->_index == 3100){
+      Serial.println("test 4 passed. ");
+    }
+    else {
+      Serial.println("test 4 FAILED!");
+    }
+    if (this->dfm){
+      delete this->dfm;
+      this->dfm = nullptr;
+    }
   };
 
   ~TestDataFileManager(){
@@ -134,8 +164,9 @@ struct TestDataFileManager {
     SD.remove("tmp2/DATA0002.csv");
     SD.remove("tmp2/DATA0005.csv");
     SD.remove("tmp2/DATA0007.csv");
-    SD.remove("tmp2/DATA0100.csv");
+    SD.remove("tmp2/DATA3100.csv");
     SD.rmdir("tmp2");
+    SD.rmdir("tmp3");
     Serial.println("done.");
   }
 

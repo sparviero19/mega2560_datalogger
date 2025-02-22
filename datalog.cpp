@@ -2,25 +2,68 @@
 #include <time.h>
 #include "datalog.h"
 
-int sample_counter = 0;
 File output_file;
 
-String DataFileManager::format_data(const float* piezoValues, const int len){
-  // Format the data into a CSV-style string
-  String data = String(millis()) + ',';
-  for (int i = 0; i < len; i++) {
-    data += String(piezoValues[i]);
-    if (i < len - 1) data += ",";
+// const char* DataFileManager::format_data(const float* piezoValues, const int len){
+
+//   // empty buffer
+//   strcpy(_buffer, "");
+  
+//   Serial.println(F("B1"));
+//   // create formatter
+//   snprintf(_buffer, "%ld", millis());
+//   char* cursor = _buffer + strlen(_buffer);
+//   for(int i=0; i<len; i++){
+//     snprintf(cursor, sizeof(_buffer) - (cursor - _buffer), ",%.2f", piezoValues[i]);
+//     cursor += strlen(cursor);
+//   }
+//   Serial.println(F("B2"));
+//   return _buffer;
+//   // String data = String(millis()) + ',';
+//   // for (int i = 0; i < len; i++) {
+//   //   data += String(piezoValues[i]);
+//   //   if (i < len - 1) data += ",";
+//   // }
+//   // Serial.println("------------- DEBUG -----------------");
+//   // Serial.print("format_data out: ");
+//   // Serial.println(data);
+// }
+
+const char* DataFileManager::format_data(const float* piezoValues, const int len){
+
+  _buffer[0] = '\0';
+  char* cursor = _buffer;
+  int remaining = sizeof(_buffer);
+
+  int written = snprintf(cursor, remaining, "%ld", millis());
+  if (written < 0 || written >= remaining) {
+    Serial.println(F("Error formatting timestamp!"));
+    return nullptr; 
   }
-  return data;
+  cursor += written;
+  remaining -= written;
+
+  char tmp[10];
+  for(int i=0; i<len; i++){
+    tmp[0] = "\0";
+    //written = snprintf(cursor, remaining, ",%.2f", piezoValues[i]);
+    dtostrf(piezoValues[i], 4, 2, tmp);
+    written = snprintf(cursor, remaining, ",%s", tmp);
+    if (written < 0 || written >= remaining) {
+      Serial.println(F("Error formatting piezo value!"));
+      return nullptr; 
+    }
+    cursor += written;
+    remaining -= written;
+    Serial.print(piezoValues[i]);
+    Serial.print('\t');
+  }
+  Serial.println();
+  Serial.print(F("_buffer: "));
+  Serial.println(_buffer);
+  return _buffer;
 }
 
-const char* DataFileManager::format_piezo_data(const float* piezoValues, const int len){
-  String formatted_data = format_data(piezoValues, len);
-  char* out = new char[len+1];
-  strcpy(out, formatted_data.c_str());
-  return out; 
-}
 
 void printDirectory(File dir, int numTabs, int depth, int max_depth) {
 
@@ -52,28 +95,12 @@ void printDirectory(File dir, int numTabs, int depth, int max_depth) {
 }
 
 
-//////// StringList methods ///////////////////
-
-// void StringList::ls(File dir){
-
-//   while(true){
-//     File entry = dir.openNextFile();
-//     if (!entry){
-//       break; //no more files
-//     }
-    
-//     if (entry.isDirectory()) continue;
-
-//     this->push(entry.name());
-//   }
-// }
-
 //////// DataFileManager related code ///////////////////
 
 void DataFileManager::_find_next_index(const File &dir) {
 
   //Serial.println("-----> Breakpoint 1");
-  int numeric_indexes[_capacity];
+  int numeric_indexes[_capacity] = {0};
   int count = 0;
 
   while(true){
@@ -86,18 +113,18 @@ void DataFileManager::_find_next_index(const File &dir) {
     if (entry.isDirectory()) continue;
     
     if (strstr(entry.name(), "DATA")!=NULL) {
-      //Serial.print("-----> Breakpoint 4  index here is ");
+      // Serial.print("-----> Breakpoint 4  index here is ");
       // extract id and convert to int
-      //Serial.println(atoi(entry.name()+5));
-      numeric_indexes[count++] = atoi(entry.name()+5); // the substing starting at position 5 should be the index 
+      // Serial.println(atoi(entry.name()+4));
+      numeric_indexes[count++] = atoi(entry.name()+4); // the substing starting at position 5 should be the index 
     }    
   }
   // let's sort the indexes first
-  //Serial.print("-----> Breakpoint 5 count = ");
-  //Serial.println(count);
+  // Serial.print("-----> Breakpoint 5 count = ");
+  // Serial.println(count);
   qsort(numeric_indexes, count, sizeof(int), _compare_ints);
   //Serial.println("-----> Breakpoint 6");
-  _index = numeric_indexes[count-1];
+  if(count) _index = numeric_indexes[count-1];
   // Serial.print("Index is: ");
   // Serial.println(_index);
   // for(int i=0; i<count; i++){
@@ -130,7 +157,7 @@ DataFile* DataFileManager::open(int index, bool append){
 }
 
 
-////////////////////////////////////////////////////////////////77
+////////////////////////////////////////////////////////////////
 int SD_info(const int chipSelect) {
 
   Sd2Card _card;
@@ -199,37 +226,43 @@ int SD_info(const int chipSelect) {
 
 
 
+// int DataFile::save_data(const float* piezoValues, const int num_values, const int led_pin) {
+//   // Open the file in append mode
+//   output_file = SD.open("data.csv", FILE_WRITE);
+//   if (output_file) {
+//     String data = format_data(piezoValues, num_values);
+//     output_file.println(data);
+//     output_file.close(); // Close the file to ensure data is saved
+//     Serial.println("Data saved: " + data);
 
-
-
-int DataFile::save_data(const float* piezoValues, const int num_values, const int led_pin) {
-  // Open the file in append mode
-  output_file = SD.open("data.csv", FILE_WRITE);
-  if (output_file) {
-    String data = format_data(piezoValues, num_values);
-    output_file.println(data);
-    output_file.close(); // Close the file to ensure data is saved
-    Serial.println("Data saved: " + data);
-
-    // Increment sample counter
-    sample_counter++;
-    if (sample_counter >= SAMPLE_LIMIT) {
-      three_blinks(led_pin);
-      return MAX_SAMPLE_COUNT_REACHED;
-    }
-  return SUCCESS;
-  } else {
-    Serial.println("Error opening file for writing!");
-    return WRITE_ERR;
-  }
-}
+//     // Increment sample counter
+//     _sample_counter++;
+//     if (_sample_counter >= SAMPLE_LIMIT) {
+//       three_blinks(led_pin);
+//       return MAX_SAMPLE_COUNT_REACHED;
+//     }
+//   return SUCCESS;
+//   } else {
+//     Serial.println("Error opening file for writing!");
+//     return WRITE_ERR;
+//   }
+// }
 
 int DataFile::save_data(const char* formatted_str, const int led_pin){
+  Serial.println(F("B3"));
   if (_file) {
     _file.println(formatted_str);
     _file.flush();
-    Serial.print("Data saved: " );
+    Serial.print(F("Data saved: " ));
     Serial.println(formatted_str);
+    
+    // Increment sample counter
+    _sample_counter++;
+    if (_sample_counter >= SAMPLE_LIMIT) {
+      three_blinks(led_pin);
+      return MAX_SAMPLE_COUNT_REACHED;
+    }
+    
     return SUCCESS;
   }
   else{

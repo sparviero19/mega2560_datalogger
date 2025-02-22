@@ -5,8 +5,10 @@ TODO: some descriptions of the work
 #include "error.h"
 #include "datalog.h"
 #include "test.hpp"
+#include "utility/SdFat.h"
+#include "utility/SdFatUtil.h"
 
-//#define TEST
+// #define TEST
 
 // FIXME cambiare 'sta porcheria
 const int LED_PIN1 = LED_BUILTIN;
@@ -26,15 +28,7 @@ bool record = false;
 bool pause = false;
 int button_pressed = 0;
 
-#if defined(TEST)
-
-#else
-  
-  DataFileManager dfm("/");
-
-  //SETUP Timer for reading sensors
-  //TCCR2A|=(1<<WGM01); // Timer compare mode
-#endif
+DataFileManager* dfm;
 
 
 void setup() {
@@ -54,29 +48,37 @@ void setup() {
     time+=500;
     if (time>=timeout) error(SERIAL_ERROR, ERROR_PIN, reset);
   }
-  Serial.println("P1 P2 P3 P4 P5");
+  //Serial.println("P1 P2 P3 P4 P5");
   
   // SD card initialization
-  Serial.println("****************************");
-  Serial.println("   Initializing SD card     ");
-  Serial.println("----------------------------");
+  Serial.println(F("****************************"));
+  Serial.println(F("   Initializing SD card     "));
+  Serial.println(F("----------------------------"));
   Serial.print("\n");
   if(!SD.begin()){
-    Serial.println("SD card initialization unsuccessful");
+    Serial.println(F("SD card initialization unsuccessful"));
   };
 
   // check for eough free space
-  Serial.println("----------------------------");
-  Serial.println("SD card content:");
+  Serial.println(F("----------------------------"));
+  Serial.println(F("SD card content:"));
   File my_root;
   my_root = SD.open("/");
   printDirectory(my_root, 0, 0, 3);
   Serial.println();
-  Serial.println("----------------------------");
-  Serial.println("  Initialization completed  ");
-  Serial.println("****************************");
+  Serial.println(F("----------------------------"));
+  Serial.println(F("  Initialization completed  "));
+  Serial.println(F("****************************"));
 
+  #if defined(TEST)
 
+  #else
+    
+    dfm = new DataFileManager("/");
+
+    //SETUP Timer for reading sensors
+    //TCCR2A|=(1<<WGM01); // Timer compare mode
+  #endif
 
 }
 
@@ -112,6 +114,7 @@ void clear_piezos(float* values) {
 
 void print_to_serial(float* piezoValues){
 
+  Serial.print(F("Print readings: "));
   for (int i = 0; i < NUM_PIEZO; i++) {
     Serial.print(piezoValues[i]);
     Serial.print('\t');
@@ -131,7 +134,7 @@ void loop() {
     done = true;
   }
   else{
-    Serial.println("program terminated");
+    Serial.println(F("program terminated"));
   }
   while(true);
 }
@@ -146,17 +149,20 @@ void loop() {
   // Serial.print("button value: ");
   // Serial.println(button_pressed);
   if (button_pressed == HIGH) {
-    Serial.println("Program started!");
+    Serial.println(F("Program started!"));
     record = true;
     button_pressed = LOW;
-    cur_file = dfm.open();
+    cur_file = dfm->open();
   }
 
   while(record) {
 
     read_piezos(piezo_values, 10);
     print_to_serial(piezo_values);
-    int out = cur_file->save_data(dfm.format_piezo_data(piezo_values, NUM_PIEZO), LED_PIN1);
+    int out = cur_file->save_data(dfm->format_data(piezo_values, NUM_PIEZO), LED_PIN1);
+    Serial.print(F("Free memory: "));
+    Serial.println(FreeRam());
+
     //int out = cur_file->save_data(piezo_values, NUM_PIEZO, LED_PIN1);
     switch(out){
       case SUCCESS:
@@ -175,7 +181,7 @@ void loop() {
     while(digitalRead(BUTTON_PIN)==HIGH);
 
     if (button_pressed == HIGH) {
-      Serial.println("Program stopped.");
+      Serial.println(F("Program stopped."));
       record = false;
       button_pressed = LOW;
       if (cur_file){
